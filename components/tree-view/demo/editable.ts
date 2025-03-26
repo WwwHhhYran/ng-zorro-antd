@@ -100,13 +100,7 @@ export class NzDemoTreeViewEditableComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // TODO: use `expandAll` instead, but this func exists bug in @angular/cdk ^18.2.0: https://github.com/angular/components/issues/30445
-    // this.tree.expandAll();
-    setTimeout(() => {
-      this.dataSource.getData().forEach(node => {
-        this.tree.expandDescendants(node);
-      });
-    });
+    this.tree.expandAll();
   }
 
   delete(node: TreeNode): void {

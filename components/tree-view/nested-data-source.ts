@@ -31,7 +31,11 @@ export class NzTreeViewNestedDataSource<T> extends DataSource<T> {
   }
 
   connect(collectionViewer: CollectionViewer): Observable<T[]> {
-    return merge(collectionViewer.viewChange, this._data.asObservable()).pipe(map(() => this.getData()));
+    return merge(
+      collectionViewer.viewChange,
+      this._tree._getExpansionModel().changed.asObservable(),
+      this._data.asObservable()
+    ).pipe(map(() => this.getData()));
   }
 
   disconnect(): void {

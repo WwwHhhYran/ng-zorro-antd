@@ -4,26 +4,24 @@
  */
 
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
-import { CdkTreeNodeOutletContext } from '@angular/cdk/tree';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { CdkTreeNodeOutletContext, FlatTreeControl } from '@angular/cdk/tree';
+import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-
-import { cloneDeep } from 'lodash';
 
 import { dispatchFakeEvent } from 'ng-zorro-antd/core/testing';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { provideNzIconsTesting } from 'ng-zorro-antd/icon/testing';
-import { NzTreeViewFlatDataSource } from 'ng-zorro-antd/tree-view/flat-data-source';
+import { NzTreeFlatDataSource } from 'ng-zorro-antd/tree-view/data-source';
 import { NzTreeFlattener } from 'ng-zorro-antd/tree-view/flattener';
 import { NzTreeNodeComponent } from 'ng-zorro-antd/tree-view/node';
 import { NzTreeNodePaddingDirective } from 'ng-zorro-antd/tree-view/padding';
 import { NzTreeViewModule } from 'ng-zorro-antd/tree-view/tree-view.module';
 import { NzTreeVirtualScrollViewComponent } from 'ng-zorro-antd/tree-view/tree-virtual-scroll-view';
 
-describe('virtual scroll', () => {
+describe('virtual scroll based nzTreeControl', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideNzIconsTesting(), provideNoopAnimations()]
@@ -31,15 +29,17 @@ describe('virtual scroll', () => {
   });
 
   describe('basic', () => {
-    let fixture: ComponentFixture<NzTestTreeViewVirtualScrollComponent>;
-    let testComponent: NzTestTreeViewVirtualScrollComponent;
+    let fixture: ComponentFixture<NzTestTreeViewVirtualScrollWithTreeControlComponent>;
+    let testComponent: NzTestTreeViewVirtualScrollWithTreeControlComponent;
     let tree: NzTreeVirtualScrollViewComponent<FlatNode>;
+    let treeControl: FlatTreeControl<FlatNode, NzSafeAny>;
     let viewport: CdkVirtualScrollViewport;
 
     beforeEach(() => {
-      fixture = TestBed.createComponent(NzTestTreeViewVirtualScrollComponent);
+      fixture = TestBed.createComponent(NzTestTreeViewVirtualScrollWithTreeControlComponent);
       testComponent = fixture.componentInstance;
       tree = testComponent.tree;
+      treeControl = testComponent.treeControl;
       viewport = tree.virtualScrollViewport;
     });
 
@@ -63,7 +63,7 @@ describe('virtual scroll', () => {
 
     it('should tree view inits data correctly', fakeAsync(() => {
       finishInit(fixture);
-      expect(tree.dataNodes.length).toBe(100 ** 2 + 100 ** 1);
+      expect(treeControl.dataNodes.length).toBe(100 ** 2 + 100 ** 1);
       expect(tree.nodes.length).toBe(100);
       tree.nodes.forEach((node, index) => {
         const nodeData = {
@@ -115,8 +115,8 @@ describe('virtual scroll', () => {
 
     it('should collapse nodes when toggle the expanded tree node', fakeAsync(() => {
       finishInit(fixture);
-      const firstNode = testComponent.tree.dataNodes[0];
-      testComponent.tree.expand(firstNode);
+      const firstNode = treeControl.dataNodes[0];
+      treeControl.expand(firstNode);
       fixture.detectChanges();
       expect(tree.nodes.length).toBe(200);
       expect(viewport.getDataLength()).toBe(200);
@@ -186,85 +186,91 @@ describe('virtual scroll', () => {
       expect(treeView.nativeElement.classList).toContain('ant-tree-block-node');
     }));
 
-    it('should nzCompareBy work', fakeAsync(() => {
+    it('should trackBy of treeControl work', fakeAsync(() => {
       finishInit(fixture);
       expect(fixture.debugElement.query(By.css('nz-tree-node')).componentInstance.data.name).toBe('0-0');
-      const newNodes = cloneDeep(tree.dataNodes).map((node, idx) => ({
-        ...node,
-        name: `0-${idx}-new`
-      }));
-      testComponent.dataSource.setFlattenedData(newNodes);
+      // change name format from '0-x' to 'v1-0-x'
+      testComponent.dataSource.setData(dig('v1-0'));
       finishInit(fixture);
-      expect(fixture.debugElement.query(By.css('nz-tree-node')).componentInstance.data.name).toBe('0-0-new');
+      // data and view both changed
+      expect(treeControl.dataNodes[0].name).toBe('v1-0-0');
+      expect(fixture.debugElement.query(By.css('nz-tree-node')).componentInstance.data.name).toBe('v1-0-0');
+
+      // set treeControl.trackBy to undefined, default use node self instead
+      treeControl.trackBy = undefined;
+      // change name format from 'v1-0-x' to 'v2-0-x'
+      testComponent.dataSource.setData(dig('v2-0'));
+      finishInit(fixture);
+      // data and view both changed
+      expect(treeControl.dataNodes[0].name).toBe('v2-0-0');
+      expect(fixture.debugElement.query(By.css('nz-tree-node')).componentInstance.data.name).toBe('v2-0-0');
+
       // rerender new data depends on whether the level of nodes is same
-      testComponent.compareBy = (node: FlatNode) => node.level;
-      const nextNodes = cloneDeep(tree.dataNodes).map((node, idx) => ({
-        ...node,
-        name: `0-${idx}-next`
-      }));
-      testComponent.dataSource.setFlattenedData(nextNodes);
+      treeControl.trackBy = (node: FlatNode) => node.level;
+      // change name format from 'v2-0-x' to 'v3-0-x'
+      testComponent.dataSource.setData(dig('v3-0'));
       finishInit(fixture);
-      expect(fixture.debugElement.query(By.css('nz-tree-node')).componentInstance.data.name).toBe('0-0-new');
+      // data has changed but view has not changed
+      expect(treeControl.dataNodes[0].name).toBe('v3-0-0');
+      expect(fixture.debugElement.query(By.css('nz-tree-node')).componentInstance.data.name).toBe('v2-0-0');
     }));
   });
 
   describe('padding', () => {
-    let fixture: ComponentFixture<NzTestTreeViewVirtualScrollComponent>;
-    let testComponent: NzTestTreeViewVirtualScrollComponent;
+    let fixture: ComponentFixture<NzTestTreeViewVirtualScrollWithTreeControlComponent>;
+    let testComponent: NzTestTreeViewVirtualScrollWithTreeControlComponent;
     const defaultIndent = 24;
 
     beforeEach(fakeAsync(() => {
-      fixture = TestBed.createComponent(NzTestTreeViewVirtualScrollComponent);
+      fixture = TestBed.createComponent(NzTestTreeViewVirtualScrollWithTreeControlComponent);
       testComponent = fixture.componentInstance;
-      fixture.detectChanges();
-      // expand all node
-      const { tree } = testComponent;
-      tree.dataNodes.forEach(node => {
-        tree.expand(node);
-      });
+      finishInit(fixture);
+      const { treeControl } = testComponent;
+      treeControl.expand(treeControl.dataNodes[0]);
       fixture.detectChanges();
     }));
 
-    it('should nzTreeNodePadding without value work', fakeAsync(() => {
+    it('should nzTreeNodePadding without value work', () => {
       fixture.detectChanges();
       const nodes = fixture.debugElement.queryAll(By.css('nz-tree-node:not([builtin])'));
-      nodes.forEach(node => {
-        expect(window.getComputedStyle(node.nativeElement).paddingLeft).toBe(
-          `${(node.componentInstance as NzTreeNodeComponent<FlatNode>).data.level * defaultIndent}px`
-        );
+      expect(nodes.length).toBe(10);
+      const [firstNode, ...otherNodes] = nodes;
+      expect(window.getComputedStyle(firstNode.nativeElement).paddingLeft).toBe('0px');
+      otherNodes.forEach(node => {
+        expect(window.getComputedStyle(node.nativeElement).paddingLeft).toBe(`${defaultIndent}px`); // level = 1, 24 * 1
       });
-    }));
+    });
 
-    it('should nzTreeNodePadding with value work', fakeAsync(() => {
+    it('should nzTreeNodePadding with value work', () => {
       fixture.detectChanges();
       const nodes = fixture.debugElement.queryAll(By.directive(NzTreeNodePaddingDirective));
-      const [firstNode, ...otherNodes] = nodes;
+      expect(nodes.length).toBe(10);
+      const firstNode = nodes[0];
+      expect(window.getComputedStyle(firstNode.nativeElement).paddingLeft).toBe('0px');
       const firstNode_paddingDir = firstNode.injector.get(NzTreeNodePaddingDirective);
       firstNode_paddingDir.level = 1;
       fixture.detectChanges();
       // 1 * defaultIndent = 24
-      expect(window.getComputedStyle(firstNode.nativeElement).paddingLeft).toBe('24px');
-      otherNodes.forEach(node => {
-        expect(window.getComputedStyle(node.nativeElement).paddingLeft).toBe(
-          `${(node.componentInstance as NzTreeNodeComponent<FlatNode>).data.level * defaultIndent}px`
-        );
+      nodes.forEach(node => {
+        expect(window.getComputedStyle(node.nativeElement).paddingLeft).toBe(`${defaultIndent}px`);
       });
-    }));
+    });
 
-    it('should nzTreeNodePaddingIndent work', fakeAsync(() => {
+    it('should nzTreeNodePaddingIndent work', () => {
       fixture.detectChanges();
-      const indent = 50;
+      const newIndent = 50;
       const nodes = fixture.debugElement.queryAll(By.directive(NzTreeNodePaddingDirective));
       nodes.forEach(node => {
         const node_paddingDir = node.injector.get(NzTreeNodePaddingDirective);
-        node_paddingDir.indent = indent;
+        node_paddingDir.indent = newIndent;
       });
-      nodes.forEach(node => {
-        expect(window.getComputedStyle(node.nativeElement).paddingLeft).toBe(
-          `${(node.componentInstance as NzTreeNodeComponent<FlatNode>).data.level * indent}px`
-        );
+      fixture.detectChanges();
+      const [firstNode, ...otherNodes] = nodes;
+      expect(window.getComputedStyle(firstNode.nativeElement).paddingLeft).toBe('0px');
+      otherNodes.forEach(node => {
+        expect(window.getComputedStyle(node.nativeElement).paddingLeft).toBe(`${newIndent}px`);
       });
-    }));
+    });
   });
 });
 
@@ -280,18 +286,20 @@ interface FlatNode {
 }
 
 /** Finish initializing the virtual scroll component at the beginning of a test. */
-function finishInit(fixture: ComponentFixture<NzSafeAny>): void {
-  // On the first cycle we render and measure the viewport.
-  fixture.detectChanges();
-  flush();
-
-  // On the second cycle we render the items.
+function finishInit(fixture: ComponentFixture<NzTestTreeViewVirtualScrollWithTreeControlComponent>): void {
+  // set the height of the viewport to 180px, the height of node to 30px.
+  fixture.debugElement.nativeElement
+    .querySelector('.cdk-virtual-scroll-viewport')!
+    .setAttribute('style', 'height: 180px; width: 200px;');
+  fixture.debugElement.queryAll(By.directive(NzTreeNodeComponent))!.map(node => {
+    node.nativeElement.setAttribute('style', 'width: 100%; height: 30px;');
+  });
+  // render the viewport.
   fixture.detectChanges();
   flush();
 
   // Flush the initial fake scroll event.
   tick(16); // flush animation frame
-  flush();
   fixture.detectChanges();
 }
 
@@ -327,81 +335,58 @@ const TREE_DATA: TreeNode[] = dig();
   imports: [NzIconModule, NzTreeViewModule],
   template: `
     <nz-tree-virtual-scroll-view
-      class="virtual-scroll-tree"
       [nzDataSource]="dataSource"
-      [nzLevelAccessor]="levelAccessor"
+      [nzTreeControl]="treeControl"
       [nzItemSize]="itemSize"
       [nzMinBufferPx]="minBufferPx"
       [nzMaxBufferPx]="maxBufferPx"
-      [nzCompareBy]="compareBy"
       [nzDirectoryTree]="directoryTree"
       [nzBlockNode]="blockNode"
     >
-      <nz-tree-node class="node" *nzTreeNodeDef="let node" nzTreeNodePadding [nzExpandable]="node.expandable">
+      <nz-tree-node *nzTreeNodeDef="let node" nzTreeNodePadding [nzExpandable]="node.expandable">
         <nz-tree-node-toggle nzTreeNodeNoopToggle></nz-tree-node-toggle>
         {{ node.name }}
       </nz-tree-node>
 
-      <nz-tree-node
-        class="node"
-        *nzTreeNodeDef="let node; when: hasChild"
-        nzTreeNodePadding
-        [nzExpandable]="node.expandable"
-      >
+      <nz-tree-node *nzTreeNodeDef="let node; when: hasChild" nzTreeNodePadding [nzExpandable]="node.expandable">
         <nz-tree-node-toggle>
           <nz-icon nzType="caret-down" nzTreeNodeToggleRotateIcon />
         </nz-tree-node-toggle>
         {{ node.name }}
       </nz-tree-node>
     </nz-tree-virtual-scroll-view>
-  `,
-  styles: [
-    `
-      .virtual-scroll-tree {
-        ::ng-deep {
-          .cdk-virtual-scroll-content-wrapper {
-            display: flex;
-            flex-direction: column;
-          }
-
-          .cdk-virtual-scroll-viewport {
-            width: 200px;
-            height: 180px;
-          }
-        }
-      }
-
-      .node {
-        width: 100%;
-        height: 30px;
-      }
-    `
-  ]
+  `
 })
-export class NzTestTreeViewVirtualScrollComponent implements OnInit {
+export class NzTestTreeViewVirtualScrollWithTreeControlComponent {
   @ViewChild(NzTreeVirtualScrollViewComponent, { static: true }) tree!: NzTreeVirtualScrollViewComponent<FlatNode>;
-  levelAccessor = (dataNode: FlatNode): number => dataNode.level;
-  hasChild = (_: number, node: FlatNode): boolean => node.expandable;
-  transformer = (node: TreeNode, level: number): FlatNode => ({
+  readonly hasChild = (_: number, node: FlatNode): boolean => node.expandable;
+  readonly trackBy = (value: FlatNode): NzSafeAny => value;
+  private transformer = (node: TreeNode, level: number): FlatNode => ({
     expandable: !!node.children && node.children.length > 0,
     name: node.name,
     level
   });
-  directoryTree: boolean = false;
-  blockNode: boolean = false;
-  itemSize = 30;
-  minBufferPx = 30 * 2;
-  maxBufferPx = 30 * 4;
-  compareBy = (value: FlatNode): NzSafeAny => value;
+  treeControl = new FlatTreeControl<FlatNode, NzSafeAny>(
+    node => node.level,
+    node => node.expandable,
+    {
+      trackBy: this.trackBy
+    }
+  );
   treeFlattener = new NzTreeFlattener(
     this.transformer,
     node => node.level,
     node => node.expandable,
     node => node.children
   );
-  dataSource!: NzTreeViewFlatDataSource<TreeNode, FlatNode>;
+  dataSource = new NzTreeFlatDataSource(this.treeControl, this.treeFlattener);
+  directoryTree: boolean = false;
+  blockNode: boolean = false;
+  itemSize = 30;
+  minBufferPx = 30 * 2;
+  maxBufferPx = 30 * 4;
 
-  ngOnInit(): void {
-    this.dataSource = new NzTreeViewFlatDataSource(this.tree, this.treeFlattener, TREE_DATA);
+  constructor() {
+    this.dataSource.setData(TREE_DATA);
   }
 }

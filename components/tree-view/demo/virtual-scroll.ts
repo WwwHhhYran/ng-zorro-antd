@@ -96,10 +96,12 @@ export class NzDemoTreeViewVirtualScrollComponent implements OnInit, AfterViewIn
   }
 
   ngAfterViewInit(): void {
-    // TODO: use `expandAll` instead, but this func exists bug in @angular/cdk ^18.2.0: https://github.com/angular/components/issues/30445
+    /**
+     * TODO: use `expandAll` instead, but this func exists bug for flatten data (only expand first level) in @angular/cdk ^18.2.0
+     * https://github.com/angular/components/issues/30445
+     * It is recommended to use nzChildrenAccessor for now.
+     */
     // this.tree.expandAll();
-    setTimeout(() => {
-      this.tree._getExpansionModel().select(...this.dataSource.getFlattenData());
-    });
+    this.tree._getExpansionModel().select(...this.dataSource.getFlattenData());
   }
 }

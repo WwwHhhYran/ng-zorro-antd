@@ -57,11 +57,9 @@ export class NzTreeFlattener<T, F, K = F> {
 
   /**
    * Expand flattened node with current expansion status.
-   * `tree` parameter must have the `isExpand` method
+   * `tree` parameter must have the `isExpanded` method
    * The returned list may have different length.
    */
-  expandFlattenedNodes(nodes: F[], tree: TreeControl<F, K>): F[];
-  expandFlattenedNodes(nodes: F[], tree: NzTreeView<F, K>): F[];
   expandFlattenedNodes(nodes: F[], tree: TreeControl<F, K> | NzTreeView<F, K>): F[] {
     const results: F[] = [];
     const currentExpand: boolean[] = [];
@@ -76,7 +74,7 @@ export class NzTreeFlattener<T, F, K = F> {
         results.push(node);
       }
       if (this.isExpandable(node)) {
-        currentExpand[this.getLevel(node) + 1] = tree?.isExpanded(node) ?? false;
+        currentExpand[this.getLevel(node) + 1] = tree.isExpanded(node);
       }
     });
     return results;

@@ -203,6 +203,7 @@ describe('tree-view based on nzLevelAccessor', () => {
 
     it('should nzTreeNodePadding without value work', () => {
       const nodes = fixture.debugElement.queryAll(By.css('nz-tree-node:not([builtin])'));
+      expect(nodes.length).toBe(8);
       nodes.forEach(node => {
         expect(window.getComputedStyle(node.nativeElement).paddingLeft).toBe(
           `${(node.componentInstance as NzTreeNodeComponent<FlatNode>).data.level * defaultIndent}px`
@@ -212,6 +213,7 @@ describe('tree-view based on nzLevelAccessor', () => {
 
     it('should nzTreeNodePadding with value work', () => {
       const nodes = fixture.debugElement.queryAll(By.directive(NzTreeNodePaddingDirective));
+      expect(nodes.length).toBe(8);
       const [parent_1, ...otherNodes] = nodes;
       const parent_1_paddingDir = parent_1.injector.get(NzTreeNodePaddingDirective);
       parent_1_paddingDir.level = 1;
@@ -228,6 +230,7 @@ describe('tree-view based on nzLevelAccessor', () => {
     it('should nzTreeNodePaddingIndent work', () => {
       const indent = 50;
       const nodes = fixture.debugElement.queryAll(By.directive(NzTreeNodePaddingDirective));
+      expect(nodes.length).toBe(8);
       nodes.forEach(node => {
         const node_paddingDir = node.injector.get(NzTreeNodePaddingDirective);
         node_paddingDir.indent = indent;

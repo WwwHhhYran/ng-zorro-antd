@@ -44,7 +44,7 @@ const TREE_DATA: TreeNode[] = [
   selector: 'nz-demo-tree-view-basic-level-accessor',
   template: `
     <nz-tree-view [nzDataSource]="dataSource" [nzLevelAccessor]="levelAccessor">
-      <nz-tree-node *nzTreeNodeDef="let node" nzTreeNodePadding [nzExpandable]="node.expandable">
+      <nz-tree-node *nzTreeNodeDef="let node" nzTreeNodePadding [nzExpandable]="false">
         <nz-tree-node-toggle nzTreeNodeNoopToggle></nz-tree-node-toggle>
         <nz-tree-node-option
           [nzDisabled]="node.disabled"
@@ -55,7 +55,7 @@ const TREE_DATA: TreeNode[] = [
         </nz-tree-node-option>
       </nz-tree-node>
 
-      <nz-tree-node *nzTreeNodeDef="let node; when: hasChild" nzTreeNodePadding [nzExpandable]="node.expandable">
+      <nz-tree-node *nzTreeNodeDef="let node; when: hasChild" nzTreeNodePadding [nzExpandable]="true">
         <nz-tree-node-toggle>
           <nz-icon nzType="caret-down" nzTreeNodeToggleRotateIcon />
         </nz-tree-node-toggle>
@@ -99,10 +99,12 @@ export class NzDemoTreeViewBasicLevelAccessorComponent implements OnInit, AfterV
   }
 
   ngAfterViewInit(): void {
-    // TODO: use `expandAll` instead, but this func exists bug in @angular/cdk ^18.2.0: https://github.com/angular/components/issues/30445
-    // this.tree.expandAll();
-    setTimeout(() => {
-      this.tree._getExpansionModel().select(...this.dataSource.getFlattenData());
-    });
+    /**
+     * TODO: use `expandAll` instead, but this func exists bug for flatten data (only expand first level) in @angular/cdk ^18.2.0
+     * https://github.com/angular/components/issues/30445
+     * It is recommended to use nzChildrenAccessor for now.
+     */
+    this.tree.expandAll();
+    // this.tree._getExpansionModel().select(...this.dataSource.getFlattenData());
   }
 }

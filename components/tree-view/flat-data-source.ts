@@ -49,11 +49,7 @@ export class NzTreeViewFlatDataSource<T, F = T, K = F> extends DataSource<F> {
       collectionViewer.viewChange,
       this._tree._getExpansionModel().changed.asObservable(),
       this._flattenedData.asObservable()
-    ).pipe(
-      map(() => {
-        return this._treeFlattener.expandFlattenedNodes(this.getFlattenData(), this._tree);
-      })
-    );
+    ).pipe(map(() => this._treeFlattener.expandFlattenedNodes(this.getFlattenData(), this._tree)));
   }
 
   disconnect(): void {

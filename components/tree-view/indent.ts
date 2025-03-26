@@ -141,11 +141,11 @@ export class NzTreeNodeIndentLineDirective<T> implements OnDestroy {
   private checkAdjacent(): void {
     let nodes: T[] = [];
     if (this.tree.treeControl) {
-      nodes = this.tree.treeControl.dataNodes || [];
+      nodes = this.tree.treeControl.dataNodes;
     } else if (this.tree.levelAccessor) {
-      nodes = this.tree.dataNodes || [];
+      nodes = this.tree.dataNodes;
     } else {
-      nodes = flattenNestedNodes(this.tree.dataNodes, this.tree.childrenAccessor!) || [];
+      nodes = flattenNestedNodes(this.tree.dataNodes, this.tree.childrenAccessor!);
     }
     this.checkAdjacentNodeChanged(nodes);
   }
@@ -165,19 +165,15 @@ export class NzTreeNodeIndentLineDirective<T> implements OnDestroy {
     this.isLeaf = this.treeNode.isLeaf;
     if (this.tree.treeControl) {
       this.isLast = !getNextSibling(
-        this.tree.treeControl.dataNodes || [],
+        this.tree.treeControl.dataNodes,
         this.treeNode.data,
         this.tree.treeControl.getLevel,
         index
       );
     } else if (this.tree.levelAccessor) {
-      this.isLast = !getNextSibling(this.tree.dataNodes || [], this.treeNode.data, this.tree.levelAccessor, index);
+      this.isLast = !getNextSibling(this.tree.dataNodes, this.treeNode.data, this.tree.levelAccessor, index);
     } else {
-      this.isLast = !getNextSiblingForNestedData(
-        this.tree.dataNodes || [],
-        this.treeNode.data,
-        this.tree.childrenAccessor!
-      );
+      this.isLast = !getNextSiblingForNestedData(this.tree.dataNodes, this.treeNode.data, this.tree.childrenAccessor!);
     }
   }
 
