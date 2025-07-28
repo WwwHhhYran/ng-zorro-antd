@@ -21,11 +21,11 @@ import {
 import { fadeMotion } from 'ng-zorro-antd/core/animation';
 import { NzFourDirectionType, NzShapeSCType } from 'ng-zorro-antd/core/types';
 import { generateClassName } from 'ng-zorro-antd/core/util';
-import { NzFloatButtonType } from 'ng-zorro-antd/float-button/typings';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 
 import { NzFloatButtonTopComponent } from './float-button-top.component';
 import { NzFloatButtonComponent } from './float-button.component';
+import { NzFloatButtonType } from './typings';
 
 const CLASS_NAME = 'ant-float-btn-group';
 

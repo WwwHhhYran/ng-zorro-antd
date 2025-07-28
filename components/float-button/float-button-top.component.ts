@@ -35,10 +35,10 @@ import { NzConfigKey, NzConfigService, WithConfig } from 'ng-zorro-antd/core/con
 import { NzScrollService } from 'ng-zorro-antd/core/services';
 import { NzShapeSCType } from 'ng-zorro-antd/core/types';
 import { fromEventOutsideAngular, generateClassName } from 'ng-zorro-antd/core/util';
-import { NzFloatButtonType } from 'ng-zorro-antd/float-button/typings';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 
 import { NzFloatButtonComponent } from './float-button.component';
+import { NzFloatButtonType } from './typings';
 
 const NZ_CONFIG_MODULE_NAME: NzConfigKey = 'backTop';
 const CLASS_NAME = 'ant-float-btn';

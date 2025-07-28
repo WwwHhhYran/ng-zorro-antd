@@ -18,9 +18,9 @@ import {
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzShapeSCType } from 'ng-zorro-antd/core/types';
 import { generateClassName } from 'ng-zorro-antd/core/util';
-import { NzFloatButtonType } from 'ng-zorro-antd/float-button/typings';
 
 import { NzFloatButtonContentComponent } from './float-button-content.component';
+import { NzFloatButtonType } from './typings';
 
 const CLASS_NAME = 'ant-float-btn';
 
